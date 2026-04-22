@@ -1,0 +1,19 @@
+[package]
+version = "0.1.0"
+title = "IILAB Scene Extension"
+description = "Minimal IILAB scene controls for loading the KUKA scene and starting simulation."
+category = "Simulation"
+authors = ["IILab"]
+keywords = ["iilab", "scene", "kuka", "simulation"]
+writeTarget.kit = true
+
+[dependencies]
+"omni.kit.uiapp" = {}
+"omni.physx" = {}
+"omni.timeline" = {}
+"isaacsim.core.experimental.utils" = {}
+"isaacsim.core.experimental.prims" = {}
+"isaacsim.core.experimental.objects" = {}
+
+[[python.module]]
+name = "iilab_scene_extension"

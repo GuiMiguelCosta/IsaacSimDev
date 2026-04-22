@@ -1,0 +1,100 @@
+# Copy this file for each single-object policy and replace the object-specific
+# fields. The goal is to describe the exact robomimic observation contract that
+# the extension must reconstruct at inference time.
+
+schema_version: 1
+policy_name: task_template
+policy_family: ibot4crms_single_object
+description: >
+  Template for one-object KUKA + container robomimic policies. Each policy
+  keeps the same robot, table, and container, and swaps only the active object
+  observation keys and scene asset.
+
+checkpoint_contract:
+  action:
+    type: ik_abs_pose_and_gripper
+    dim: 8
+    layout:
+      - target_pos_x
+      - target_pos_y
+      - target_pos_z
+      - target_quat_w
+      - target_quat_x
+      - target_quat_y
+      - target_quat_z
+      - gripper_command
+  observations:
+    ordered_keys:
+      - joint_pos
+      - joint_vel
+      - ee_pose
+      - object_pos_key
+      - object_quat_key
+      - target_container_pos
+      - target_container_quat
+      - actions
+
+runtime_scene:
+  robot:
+    prim_path: /World/Robot
+    ee_link_name: link_7
+    ee_offset_m: [0.0, 0.0, 0.210]
+  table:
+    prim_path: /World/Table
+  container:
+    prim_path: /World/Container
+    semantic_name: box
+  object:
+    prim_path: /World/Piece
+    semantic_name: ReplaceMe
+    usd_env_var: REPLACE_ME_USD
+
+observation_terms:
+  joint_pos:
+    shape: [13]
+    source: robot.joint_pos_rel
+    asset_name: robot
+    notes: Relative robot joint positions exactly as recorded during training.
+  joint_vel:
+    shape: [13]
+    source: robot.joint_vel_rel
+    asset_name: robot
+  ee_pose:
+    shape: [7]
+    source: robot.ee_pose_w
+    asset_name: robot
+    layout: [pos_x, pos_y, pos_z, quat_w, quat_x, quat_y, quat_z]
+  object_pos_key:
+    shape: [3]
+    source: object.root_pos_w
+    asset_name: ReplaceMe
+  object_quat_key:
+    shape: [4]
+    source: object.root_quat_w
+    asset_name: ReplaceMe
+    layout: [quat_w, quat_x, quat_y, quat_z]
+  target_container_pos:
+    shape: [3]
+    source: container.root_pos_w
+    asset_name: box
+  target_container_quat:
+    shape: [4]
+    source: container.root_quat_w
+    asset_name: box
+    layout: [quat_w, quat_x, quat_y, quat_z]
+  actions:
+    shape: [8]
+    source: last_action
+    notes: Previous action fed back as an observation term when the checkpoint expects it.
+
+validation:
+  required_obs_keys:
+    - joint_pos
+    - joint_vel
+    - ee_pose
+    - object_pos_key
+    - object_quat_key
+    - target_container_pos
+    - target_container_quat
+    - actions
+  expected_action_dim: 8

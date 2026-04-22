@@ -1,0 +1,103 @@
+schema_version: 1
+policy_name: task_axis
+policy_family: ibot4crms_single_object
+description: >
+  Single-object KUKA policy for placing the Axis into the container. This file
+  defines the observation dict that the extension should build before calling a
+  robomimic checkpoint for the Axis task.
+
+checkpoint_contract:
+  action:
+    type: ik_abs_pose_and_gripper
+    dim: 8
+    layout:
+      - target_pos_x
+      - target_pos_y
+      - target_pos_z
+      - target_quat_w
+      - target_quat_x
+      - target_quat_y
+      - target_quat_z
+      - gripper_command
+  observations:
+    ordered_keys:
+      - joint_pos
+      - joint_vel
+      - ee_pose
+      - axis_pos
+      - axis_quat
+      - target_container_pos
+      - target_container_quat
+      - actions
+
+runtime_scene:
+  robot:
+    prim_path: /World/Robot
+    ee_link_name: link_7
+    ee_offset_m: [0.0, 0.0, 0.210]
+    notes: Matches the KUKA IK-absolute setup used by the current extension.
+  table:
+    prim_path: /World/Table
+  container:
+    prim_path: /World/Container
+    semantic_name: box
+  object:
+    prim_path: /World/Piece
+    semantic_name: Axis
+    usd_env_var: IILAB_AXIS_USD
+    default_orientation_wxyz: [0.7071068, 0.7071068, 0.0, 0.0]
+    notes: Axis is expected to lie flat on the table before pick.
+
+observation_terms:
+  joint_pos:
+    shape: [13]
+    source: robot.joint_pos_rel
+    asset_name: robot
+    notes: Use the same joint vector definition as the training task.
+  joint_vel:
+    shape: [13]
+    source: robot.joint_vel_rel
+    asset_name: robot
+  ee_pose:
+    shape: [7]
+    source: robot.ee_pose_w
+    asset_name: robot
+    layout: [pos_x, pos_y, pos_z, quat_w, quat_x, quat_y, quat_z]
+  axis_pos:
+    shape: [3]
+    source: object.root_pos_w
+    asset_name: Axis
+    prim_path: /World/Piece
+  axis_quat:
+    shape: [4]
+    source: object.root_quat_w
+    asset_name: Axis
+    prim_path: /World/Piece
+    layout: [quat_w, quat_x, quat_y, quat_z]
+  target_container_pos:
+    shape: [3]
+    source: container.root_pos_w
+    asset_name: box
+    prim_path: /World/Container
+  target_container_quat:
+    shape: [4]
+    source: container.root_quat_w
+    asset_name: box
+    prim_path: /World/Container
+    layout: [quat_w, quat_x, quat_y, quat_z]
+  actions:
+    shape: [8]
+    source: last_action
+    notes: Feed back the previously applied action if the checkpoint expects it.
+
+validation:
+  required_obs_keys:
+    - joint_pos
+    - joint_vel
+    - ee_pose
+    - axis_pos
+    - axis_quat
+    - target_container_pos
+    - target_container_quat
+    - actions
+  expected_action_dim: 8
