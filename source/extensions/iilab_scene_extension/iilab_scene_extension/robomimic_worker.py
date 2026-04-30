@@ -13,10 +13,23 @@ import torch
 
 
 def _emit(message: dict) -> None:
+    """Write one JSON protocol message to stdout.
+
+    Input is a message dictionary; there is no output.
+    This exists so the parent extension can communicate with the worker through
+    line-delimited JSON.
+    """
+
     print(json.dumps(message), flush=True)
 
 
 def _make_parser() -> argparse.ArgumentParser:
+    """Create the worker command-line argument parser.
+
+    There are no inputs; the output is an ArgumentParser.
+    This exists to keep subprocess startup options explicit and validated.
+    """
+
     parser = argparse.ArgumentParser(description="Robomimic policy inference worker.")
     parser.add_argument("--checkpoint", required=True, help="Path to the robomimic checkpoint.")
     parser.add_argument("--norm-factor-min", type=float, default=None)
@@ -25,16 +38,37 @@ def _make_parser() -> argparse.ArgumentParser:
 
 
 def _unnormalize_action(actions: np.ndarray, norm_factor_min: float | None, norm_factor_max: float | None) -> np.ndarray:
+    """Map actions from [-1, 1] back to configured policy action bounds.
+
+    Inputs are the action array and optional min/max factors; the output is an
+    action array. This exists to support checkpoints trained with normalized
+    action heads without changing controller code.
+    """
+
     if norm_factor_min is None or norm_factor_max is None:
         return actions
     return ((actions + 1.0) * (norm_factor_max - norm_factor_min)) / 2.0 + norm_factor_min
 
 
 def _mute_stdout():
+    """Return a context manager that suppresses library stdout chatter.
+
+    There are no inputs; the output is a redirect_stdout context manager.
+    This exists because robomimic and dependencies may print non-JSON logs that
+    would otherwise corrupt the parent-worker protocol.
+    """
+
     return contextlib.redirect_stdout(io.StringIO())
 
 
 def main() -> int:
+    """Run the robomimic inference worker protocol loop.
+
+    Inputs arrive through command-line args and stdin; the output is a process
+    exit code. This exists to keep heavy ML imports and policy inference isolated
+    from the Isaac extension process.
+    """
+
     parser = _make_parser()
     args = parser.parse_args()
 

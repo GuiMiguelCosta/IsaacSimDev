@@ -9,6 +9,13 @@ ISAACLAB_ROOT = Path(os.getenv("ISAACLAB_ROOT", str(Path.home() / "IsaacLab"))).
 
 
 def _asset_path(env_var_name: str, relative_path: str) -> str:
+    """Resolve an asset path from an environment variable or default root.
+
+    Inputs are the environment variable name and relative fallback path; the
+    output is an expanded filesystem path string. This exists so all configurable
+    USD assets follow the same override behavior.
+    """
+
     return str(Path(os.getenv(env_var_name, str(IILAB_ASSETS_DIR / relative_path))).expanduser())
 
 
